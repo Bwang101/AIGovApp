@@ -1,112 +1,177 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, FlatList, View, Pressable, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import RECIPES, { Recipe } from '../data/recipes';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
+export default function ExploreScreen() {
+  const [randomRecipes, setRandomRecipes] = useState<Recipe[]>([]);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  useEffect(() => {
+    // Get 5 random recipes on load
+    const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
+    setRandomRecipes(shuffled.slice(0, 5));
+  }, []);
+
+  const refreshRecipes = () => {
+    const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
+    setRandomRecipes(shuffled.slice(0, 5));
+    setSelectedRecipe(null);
+  };
+
+  const renderRecipeCard = ({ item }: { item: Recipe }) => (
+    <Pressable
+      style={[styles.card, selectedRecipe?.id === item.id && styles.cardSelected]}
+      onPress={() => setSelectedRecipe(item)}>
+      <ThemedText type="defaultSemiBold" style={styles.recipeName}>
+        {item.title}
+      </ThemedText>
+      <ThemedText style={styles.cardText} numberOfLines={2}>
+        {item.ingredients.join(', ')}
+      </ThemedText>
+    </Pressable>
+  );
+
+  if (selectedRecipe) {
+    return (
+      <ThemedView style={styles.detailModal}>
+        <Pressable onPress={() => setSelectedRecipe(null)} style={styles.backButton}>
+          <ThemedText type="defaultSemiBold" style={styles.backText}>← Back</ThemedText>
+        </Pressable>
+        <ScrollView style={styles.detailScroll} contentContainerStyle={styles.detailScrollContent}>
+          <ThemedView style={styles.detailBox}>
+            <ThemedText type="title" style={styles.detailTitle}>{selectedRecipe.title}</ThemedText>
+            <ThemedText style={styles.sectionLabel}>Ingredients:</ThemedText>
+            <ThemedText style={styles.detailText}>{selectedRecipe.ingredients.join(', ')}</ThemedText>
+            <ThemedText style={styles.sectionLabel}>Instructions:</ThemedText>
+            <ThemedText style={styles.detailText}>{selectedRecipe.instructions}</ThemedText>
+          </ThemedView>
+        </ScrollView>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
+    );
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedText type="title" style={styles.titleText}>Explore Recipes</ThemedText>
+      <ThemedText type="subtitle" style={styles.subtitleText}>Discover random recipes</ThemedText>
+
+      <FlatList
+        data={randomRecipes}
+        renderItem={renderRecipeCard}
+        keyExtractor={(item) => item.id}
+        style={styles.list}
+        scrollEnabled={true}
+      />
+
+      <Pressable style={styles.refreshButton} onPress={refreshRecipes}>
+        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+          Refresh Recipes
         </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+      </Pressable>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#e9f8f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  titleText: {
+    color: '#000',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitleText: {
+    color: '#222',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  list: {
+    width: '100%',
+    maxWidth: 560,
+    marginBottom: 16,
+    alignSelf: 'center',
+  },
+  card: {
+    backgroundColor: '#f7fff9',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0f5132',
+  },
+  cardSelected: {
+    backgroundColor: '#d4f1e4',
+    borderLeftColor: '#053b2a',
+  },
+  recipeName: {
+    color: '#000',
+    marginBottom: 4,
+  },
+  cardText: {
+    color: '#222',
+    fontSize: 12,
+  },
+  detailModal: {
+    flex: 1,
+    backgroundColor: '#e9f8f0',
+    paddingTop: 20,
+  },
+  backButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  backText: {
+    color: '#0f5132',
+    fontSize: 16,
+  },
+  detailScroll: {
+    flex: 1,
+  },
+  detailScrollContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  detailBox: {
+    width: '100%',
+    maxWidth: 600,
+    backgroundColor: '#f7fff9',
+    borderRadius: 12,
+    padding: 20,
+  },
+  detailTitle: {
+    color: '#000',
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    color: '#000',
+    fontWeight: '600',
+    marginTop: 12,
+    marginBottom: 6,
+    fontSize: 14,
+  },
+  detailText: {
+    color: '#222',
+    lineHeight: 22,
+    fontSize: 14,
+  },
+  refreshButton: {
+    backgroundColor: '#0f5132',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+    width: 160,
+  },
+  buttonText: {
+    color: '#fff',
   },
 });
+
