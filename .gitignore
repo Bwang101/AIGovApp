@@ -1,0 +1,14 @@
+# Node
+node_modules/
+
+# Expo
+.expo/
+
+# Python virtual environments and caches
+server/.venv/
+server/__pycache__/
+*.pyc
+
+# Misc
+.DS_Store
+.env
