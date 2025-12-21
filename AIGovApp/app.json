@@ -43,6 +43,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "RECIPE_API_BASE": "http://localhost:8080"
     }
   }
 }

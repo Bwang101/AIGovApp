@@ -1,29 +1,67 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Modern food app color palette inspired by contemporary design
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Modern pink/magenta accent color
+const primaryPink = '#FF6B9D';
+const primaryPinkDark = '#FF4D7A';
+const primaryPinkLight = '#FFB3D1';
+
+// Green accent for prices/badges
+const accentGreen = '#4CAF50';
+const accentGreenDark = '#388E3C';
+const accentGreenLight = '#81C784';
+
+// Neutral colors
+const backgroundLight = '#FFFFFF';
+const backgroundGray = '#F5F5F5';
+const textDark = '#1A1A1A';
+const textGray = '#666666';
+const textLight = '#999999';
+
+const tintColorLight = primaryPink;
+const tintColorDark = primaryPinkLight;
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: textDark,
+    background: backgroundLight,
+    backgroundSecondary: backgroundGray,
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: textGray,
+    tabIconDefault: textLight,
     tabIconSelected: tintColorLight,
+    primary: primaryPink,
+    primaryDark: primaryPinkDark,
+    primaryLight: primaryPinkLight,
+    accent: accentGreen,
+    accentDark: accentGreenDark,
+    accentLight: accentGreenLight,
+    cardBackground: '#FFFFFF',
+    border: '#E0E0E0',
+    textGray: textGray,
+    textLight: textLight,
   },
   dark: {
     text: '#ECEDEE',
     background: '#151718',
+    backgroundSecondary: '#1F1F1F',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    primary: primaryPink,
+    primaryDark: primaryPinkDark,
+    primaryLight: primaryPinkLight,
+    accent: accentGreen,
+    accentDark: accentGreenDark,
+    accentLight: accentGreenLight,
+    cardBackground: '#1F1F1F',
+    border: '#333333',
+    textGray: '#9BA1A6',
+    textLight: '#6B7280',
   },
 };
 

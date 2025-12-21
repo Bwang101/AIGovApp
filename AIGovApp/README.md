@@ -8,6 +8,9 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npm install
+   # install server deps
+   cd server
+   pip install -r requirements.txt
    ```
 
 2. Start the app
@@ -15,6 +18,18 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npx expo start
    ```
+
+3. Run server tests
+
+   ```bash
+   cd server
+   pytest
+   ```
+
+CI/Deployment
+
+- The repo includes GitHub Actions workflows to run tests and build Docker images. See `.github/workflows/` for details.
+
 
 In the output, you'll find options to open the app in a
 

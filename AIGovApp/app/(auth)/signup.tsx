@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Pressable } from 'react-native';
+import { StyleSheet, TextInput, View, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Storage from '../utils/storage';
 import { useRouter } from 'expo-router';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SignupScreen() {
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
   const [confirm, setConfirm] = useState('');
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
   const onSignup = async () => {
     if (!user || !pass || !confirm) return;
@@ -23,58 +30,143 @@ export default function SignupScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.titleText}>Sign up</ThemedText>
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={user}
-        onChangeText={setUser}
-        placeholderTextColor="#a8c7ba"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={pass}
-        onChangeText={setPass}
-        secureTextEntry
-        placeholderTextColor="#a8c7ba"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={confirm}
-        onChangeText={setConfirm}
-        secureTextEntry
-        placeholderTextColor="#a8c7ba"
-      />
-      <Pressable style={styles.button} onPress={onSignup}>
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>Sign up</ThemedText>
-      </Pressable>
-      <ThemedText style={styles.linkText}>
-        Already have an account?{' '}
-        <ThemedText style={styles.link} onPress={() => router.push('/(auth)/login')}>
-          Sign in
-        </ThemedText>
-      </ThemedText>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.titleText}>Sign up</ThemedText>
+          <ThemedText type="subtitle" style={styles.subtitleText}>
+            Create your account
+          </ThemedText>
+        </View>
+
+        <Card variant="elevated" style={styles.card}>
+          <View style={styles.inputContainer}>
+            <Ionicons name="person-outline" size={20} color={colors.textGray} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              placeholderTextColor={colors.textLight}
+              value={user}
+              onChangeText={setUser}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color={colors.textGray} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor={colors.textLight}
+              value={pass}
+              onChangeText={setPass}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color={colors.textGray} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              placeholderTextColor={colors.textLight}
+              value={confirm}
+              onChangeText={setConfirm}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </View>
+
+          <Button
+            title="Sign up"
+            onPress={onSignup}
+            variant="primary"
+            style={styles.button}
+          />
+
+          <View style={styles.linkContainer}>
+            <ThemedText style={styles.linkText}>
+              Already have an account?{' '}
+              <ThemedText style={styles.link} onPress={() => router.push('/(auth)/login')}>
+                Sign in
+              </ThemedText>
+            </ThemedText>
+          </View>
+        </Card>
+      </ScrollView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12, backgroundColor: '#e9f8f0' },
-  titleText: { color: '#000' },
-  input: {
-    width: '100%',
-    maxWidth: 420,
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#053b2a',
-    color: '#e6fff2',
-    borderWidth: 1,
-    borderColor: '#0f5132',
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
   },
-  button: { marginTop: 8, padding: 12, backgroundColor: '#0f5132', borderRadius: 8 },
-  buttonText: { color: '#fff' },
-  linkText: { color: '#222', marginTop: 12 },
-  link: { color: '#0f5132', fontWeight: 'bold' },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    paddingTop: 60,
+  },
+  header: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  subtitleText: {
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '400',
+  },
+  card: {
+    padding: 24,
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1A1A1A',
+    padding: 0,
+  },
+  button: {
+    width: '100%',
+    marginTop: 8,
+  },
+  linkContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  link: {
+    color: '#FF6B9D',
+    fontWeight: '600',
+  },
 });

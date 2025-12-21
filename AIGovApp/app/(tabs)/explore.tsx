@@ -1,52 +1,92 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, FlatList, View, ScrollView, Dimensions } from 'react-native';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { AnimatedCard } from '@/components/ui/animated-card';
+import { AnimatedButton } from '@/components/ui/animated-button';
+import { Badge } from '@/components/ui/badge';
 import RECIPES, { Recipe } from '../data/recipes';
+import { Colors } from '@/constants/theme';
+import { Spacing, Radius } from '@/constants/spacing';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - Spacing.lg * 3) / 2; // 2 columns with padding
 
 export default function ExploreScreen() {
   const [randomRecipes, setRandomRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
   useEffect(() => {
-    // Get 5 random recipes on load
+    // Get 6 random recipes on load
     const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
-    setRandomRecipes(shuffled.slice(0, 5));
+    setRandomRecipes(shuffled.slice(0, 6));
   }, []);
 
   const refreshRecipes = () => {
     const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
-    setRandomRecipes(shuffled.slice(0, 5));
+    setRandomRecipes(shuffled.slice(0, 6));
     setSelectedRecipe(null);
   };
 
-  const renderRecipeCard = ({ item }: { item: Recipe }) => (
-    <Pressable
-      style={[styles.card, selectedRecipe?.id === item.id && styles.cardSelected]}
+  const renderRecipeCard = ({ item, index }: { item: Recipe; index: number }) => (
+    <AnimatedCard
+      variant="elevated"
+      style={styles.recipeCard}
+      delay={index * 50}
+      entering={FadeInDown.duration(400).delay(index * 100)}
       onPress={() => setSelectedRecipe(item)}>
-      <ThemedText type="defaultSemiBold" style={styles.recipeName}>
-        {item.title}
-      </ThemedText>
-      <ThemedText style={styles.cardText} numberOfLines={2}>
-        {item.ingredients.join(', ')}
-      </ThemedText>
-    </Pressable>
+      <View style={styles.cardImagePlaceholder}>
+        <Ionicons name="restaurant" size={32} color={colors.primary} />
+      </View>
+      <View style={styles.cardContent}>
+        <ThemedText type="defaultSemiBold" style={styles.recipeName} numberOfLines={2}>
+          {item.title}
+        </ThemedText>
+        <View style={styles.cardFooter}>
+          <Badge label={`${item.ingredients.length} items`} variant="accent" />
+          <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
+        </View>
+      </View>
+    </AnimatedCard>
   );
 
   if (selectedRecipe) {
     return (
-      <ThemedView style={styles.detailModal}>
-        <Pressable onPress={() => setSelectedRecipe(null)} style={styles.backButton}>
-          <ThemedText type="defaultSemiBold" style={styles.backText}>← Back</ThemedText>
-        </Pressable>
+      <ThemedView style={styles.detailContainer}>
+        <View style={styles.detailHeader}>
+          <AnimatedButton
+            title="← Back"
+            onPress={() => setSelectedRecipe(null)}
+            variant="outline"
+            size="small"
+          />
+        </View>
         <ScrollView style={styles.detailScroll} contentContainerStyle={styles.detailScrollContent}>
-          <ThemedView style={styles.detailBox}>
+          <AnimatedCard variant="elevated" style={styles.detailCard} entering={FadeIn.duration(400)}>
+            <View style={styles.detailImagePlaceholder}>
+              <Ionicons name="restaurant" size={48} color={colors.primary} />
+            </View>
             <ThemedText type="title" style={styles.detailTitle}>{selectedRecipe.title}</ThemedText>
-            <ThemedText style={styles.sectionLabel}>Ingredients:</ThemedText>
-            <ThemedText style={styles.detailText}>{selectedRecipe.ingredients.join(', ')}</ThemedText>
-            <ThemedText style={styles.sectionLabel}>Instructions:</ThemedText>
-            <ThemedText style={styles.detailText}>{selectedRecipe.instructions}</ThemedText>
-          </ThemedView>
+            
+            <View style={styles.ingredientsSection}>
+              <ThemedText style={styles.sectionLabel}>Ingredients</ThemedText>
+              <View style={styles.ingredientsList}>
+                {selectedRecipe.ingredients.map((ing, idx) => (
+                  <Badge key={idx} label={ing} variant="gray" style={styles.ingredientBadge} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.instructionsSection}>
+              <ThemedText style={styles.sectionLabel}>Instructions</ThemedText>
+              <ThemedText style={styles.detailText}>{selectedRecipe.instructions}</ThemedText>
+            </View>
+          </AnimatedCard>
         </ScrollView>
       </ThemedView>
     );
@@ -54,22 +94,35 @@ export default function ExploreScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.titleText}>Explore Recipes</ThemedText>
-      <ThemedText type="subtitle" style={styles.subtitleText}>Discover random recipes</ThemedText>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <Animated.View entering={FadeInDown.duration(600).delay(0)} style={styles.header}>
+          <ThemedText type="title" style={styles.titleText}>Explore Recipes</ThemedText>
+          <ThemedText type="subtitle" style={styles.subtitleText}>
+            Discover delicious recipes
+          </ThemedText>
+        </Animated.View>
 
-      <FlatList
-        data={randomRecipes}
-        renderItem={renderRecipeCard}
-        keyExtractor={(item) => item.id}
-        style={styles.list}
-        scrollEnabled={true}
-      />
+        <FlatList
+          data={randomRecipes}
+          renderItem={renderRecipeCard}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          scrollEnabled={false}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.listContent}
+        />
 
-      <Pressable style={styles.refreshButton} onPress={refreshRecipes}>
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-          Refresh Recipes
-        </ThemedText>
-      </Pressable>
+        <Animated.View entering={FadeInDown.duration(600).delay(400)}>
+          <AnimatedButton
+            title="Refresh Recipes"
+            onPress={refreshRecipes}
+            variant="primary"
+            style={styles.refreshButton}
+          />
+        </Animated.View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -77,101 +130,129 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#e9f8f0',
+    backgroundColor: '#F5F5F5',
+  },
+  scrollContent: {
+    padding: Spacing.lg,
+    paddingTop: 60,
+    paddingBottom: Spacing.xl,
+  },
+  header: {
+    marginBottom: Spacing.lg,
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.5,
+  },
+  subtitleText: {
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '400',
+  },
+  listContent: {
+    paddingBottom: Spacing.lg,
+  },
+  row: {
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  recipeCard: {
+    width: CARD_WIDTH,
+    padding: 0,
+    overflow: 'hidden',
+    borderRadius: Radius.lg,
+  },
+  cardImagePlaceholder: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#FFE5F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleText: {
-    color: '#000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitleText: {
-    color: '#222',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  list: {
-    width: '100%',
-    maxWidth: 560,
-    marginBottom: 16,
-    alignSelf: 'center',
-  },
-  card: {
-    backgroundColor: '#f7fff9',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#0f5132',
-  },
-  cardSelected: {
-    backgroundColor: '#d4f1e4',
-    borderLeftColor: '#053b2a',
+  cardContent: {
+    padding: Spacing.md,
   },
   recipeName: {
-    color: '#000',
-    marginBottom: 4,
-  },
-  cardText: {
-    color: '#222',
-    fontSize: 12,
-  },
-  detailModal: {
-    flex: 1,
-    backgroundColor: '#e9f8f0',
-    paddingTop: 20,
-  },
-  backButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  backText: {
-    color: '#0f5132',
     fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: Spacing.sm,
+    minHeight: 40,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailContainer: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  detailHeader: {
+    paddingTop: 60,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
   detailScroll: {
     flex: 1,
   },
   detailScrollContent: {
-    padding: 20,
-    alignItems: 'center',
+    padding: Spacing.lg,
   },
-  detailBox: {
+  detailCard: {
+    padding: 0,
+    overflow: 'hidden',
+    borderRadius: Radius.lg,
+  },
+  detailImagePlaceholder: {
     width: '100%',
-    maxWidth: 600,
-    backgroundColor: '#f7fff9',
-    borderRadius: 12,
-    padding: 20,
+    height: 200,
+    backgroundColor: '#FFE5F0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   detailTitle: {
-    color: '#000',
-    marginBottom: 12,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+  },
+  ingredientsSection: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  ingredientsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  ingredientBadge: {
+    marginRight: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  instructionsSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   sectionLabel: {
-    color: '#000',
+    fontSize: 18,
     fontWeight: '600',
-    marginTop: 12,
-    marginBottom: 6,
-    fontSize: 14,
+    color: '#1A1A1A',
+    marginBottom: Spacing.md,
   },
   detailText: {
-    color: '#222',
-    lineHeight: 22,
-    fontSize: 14,
+    fontSize: 15,
+    color: '#666666',
+    lineHeight: 24,
   },
   refreshButton: {
-    backgroundColor: '#0f5132',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 20,
-    width: 160,
-  },
-  buttonText: {
-    color: '#fff',
+    marginTop: Spacing.sm,
+    width: '100%',
   },
 });
-

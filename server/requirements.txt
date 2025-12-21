@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sentence-transformers
+faiss-cpu
+numpy
+pandas
+python-dotenv
+openai
+python-multipart
+pytest
+pytest-asyncio
+slowapi
+sentry-sdk
