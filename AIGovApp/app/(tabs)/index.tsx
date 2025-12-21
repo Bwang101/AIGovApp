@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import RECIPES, { Recipe } from '../data/recipes';
 import Storage from '../utils/storage';
-import useRecipeSearch from '../hooks/useRecipeSearch';
+import { useIsFocused } from '@react-navigation/native';
 import { Colors } from '@/constants/theme';
 import { Spacing, Radius, Shadows } from '@/constants/spacing';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -30,6 +30,7 @@ export default function HomeScreen() {
   const [showRecipe, setShowRecipe] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     (async () => {
@@ -102,124 +103,6 @@ export default function HomeScreen() {
     await saveHistory(newHist);
   };
 
-  // AI Buttons component
-  const AIButtons = () => {
-    const { search, generate, loading, error, lastResult } = useRecipeSearch();
-    const [aiModalVisible, setAiModalVisible] = useState(false);
-    const [generatedText, setGeneratedText] = useState<string | null>(null);
-    const [aiResults, setAiResults] = useState<any | null>(null);
-
-    const onAiSearch = async () => {
-      if (!input || input.trim().length === 0) return;
-      try {
-        const res = await search(input, 3);
-        // if we have a close match, use it like local search
-        if (res && res.results && res.results.length > 0 && res.best_score >= 0.55) {
-          const top = res.results[0];
-          const newRecipe = {
-            id: `ai-${Date.now()}`,
-            title: top.title || 'AI Match',
-            ingredients: (typeof top.ingredients === 'string' ? top.ingredients.split(',') : top.ingredients) || [],
-            instructions: top.instructions || '',
-          } as any;
-          setResult(newRecipe);
-          setShowRecipe(true);
-
-          // push to history
-          const newItem: HistoryItem = { id: newRecipe.id, title: newRecipe.title, favorite: false };
-          const existing = history.find((h) => h.id === newItem.id);
-          let newHist = history.slice();
-          if (!existing) newHist = [newItem, ...newHist];
-          else newHist = [existing, ...history.filter((h) => h.id !== existing.id)];
-          await saveHistory(newHist.slice(0, 50));
-          return;
-        }
-
-        // else open modal to show results and allow generation
-        setAiModalVisible(true);
-        setAiResults(res);
-      } catch (e) {
-        // ignore, error displayed below
-      }
-    };
-
-    const onGenerate = async () => {
-      try {
-        const gen = await generate(input);
-        setGeneratedText(gen.generated || 'No generated text');
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    return (
-      <>
-        <AnimatedButton
-          title={loading ? 'Searching...' : 'Find with AI'}
-          onPress={onAiSearch}
-          variant="secondary"
-          style={styles.aiButton}
-          loading={loading}
-        />
-
-        <Modal visible={aiModalVisible} animationType="slide" onRequestClose={() => setAiModalVisible(false)}>
-          <ThemedView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <AnimatedButton
-            title="← Back"
-            onPress={() => setAiModalVisible(false)}
-            variant="outline"
-            size="small"
-          />
-        </View>
-            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
-              <AnimatedCard variant="elevated" style={styles.modalCard} entering={FadeIn.duration(400)}>
-                <ThemedText type="title" style={styles.modalTitle}>AI Results</ThemedText>
-                {error ? (
-                  <ThemedText style={styles.errorText}>Error: {error}</ThemedText>
-                ) : null}
-                {aiResults && aiResults.results && aiResults.results.length > 0 ? (
-                  aiResults.results.map((r: any, i: number) => (
-                    <AnimatedCard
-                      key={i}
-                      variant="outlined"
-                      style={styles.resultCard}
-                      entering={FadeInDown.duration(400).delay(i * 100)}>
-                      <ThemedText type="defaultSemiBold" style={styles.resultTitle}>{r.title}</ThemedText>
-                      <Badge label={`Score: ${r.score.toFixed(2)}`} variant="accent" style={styles.scoreBadge} />
-                      <ThemedText style={styles.resultText}>
-                        {typeof r.ingredients === 'string' ? r.ingredients : (r.ingredients || []).join(', ')}
-                      </ThemedText>
-                      <ThemedText style={styles.sectionLabel}>Instructions</ThemedText>
-                      <ThemedText style={styles.resultText}>{r.instructions}</ThemedText>
-                    </AnimatedCard>
-                  ))
-                ) : (
-                  <ThemedText style={styles.resultText}>No close matches. You can generate a custom recipe.</ThemedText>
-                )}
-
-                <AnimatedButton
-                  title="Generate Recipe"
-                  onPress={onGenerate}
-                  variant="primary"
-                  style={styles.generateButton}
-                  loading={loading}
-                />
-
-                {generatedText ? (
-                  <AnimatedCard variant="outlined" style={styles.generatedCard} entering={FadeIn.duration(400)}>
-                    <ThemedText type="defaultSemiBold" style={styles.sectionLabel}>Generated Recipe</ThemedText>
-                    <ThemedText style={styles.resultText}>{generatedText}</ThemedText>
-                  </AnimatedCard>
-                ) : null}
-              </AnimatedCard>
-            </ScrollView>
-          </ThemedView>
-        </Modal>
-      </>
-    );
-  };
-
   if (showRecipe && result) {
     return (
       <ThemedView style={styles.modalContainer}>
@@ -232,7 +115,7 @@ export default function HomeScreen() {
           />
         </View>
         <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
-          <AnimatedCard variant="elevated" style={styles.recipeCard} entering={FadeIn.duration(400)}>
+          <AnimatedCard variant="elevated" style={styles.recipeCard}>
             <ThemedText type="title" style={styles.recipeTitle}>{result.title}</ThemedText>
             
             <View style={styles.ingredientsSection}>
@@ -257,8 +140,12 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView
+        key={isFocused ? 'focused' : 'blurred'}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
+        <Animated.View entering={FadeInDown.duration(600).delay(0)}>
+          <ThemedText type="defaultSemiBold" style={[styles.appLabel, { color: '#27AE60' }]}>Byte to Bite</ThemedText>
+        </Animated.View>
         <Animated.View entering={FadeInDown.duration(600).delay(0)} style={styles.header}>
           <ThemedText type="title" style={styles.titleText}>Find Your Favorite Food</ThemedText>
           <ThemedText type="subtitle" style={styles.subtitleText}>
@@ -292,10 +179,6 @@ export default function HomeScreen() {
           />
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(600).delay(300)}>
-          <AIButtons />
-        </Animated.View>
-
         {history.length > 0 && (
           <Animated.View entering={FadeInDown.duration(600).delay(400)} style={styles.historySection}>
             <View style={styles.sectionHeader}>
@@ -308,7 +191,6 @@ export default function HomeScreen() {
                   variant="elevated"
                   style={styles.historyCard}
                   delay={index * 50}
-                  entering={FadeInDown.duration(400).delay(index * 100)}
                   onPress={() => {
                     const recipe = RECIPES.find((r) => r.id === item.id);
                     if (recipe) {
@@ -347,12 +229,14 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.xl,
+    alignItems: 'center',
   },
   titleText: {
     fontSize: 32,
     fontWeight: '700',
     color: '#1A1A1A',
     marginBottom: Spacing.sm,
+    textAlign: 'center',
     letterSpacing: -0.5,
   },
   subtitleText: {
@@ -393,6 +277,12 @@ const styles = StyleSheet.create({
   },
   historySection: {
     marginTop: Spacing.xl,
+  },
+  appLabel: {
+    fontSize: 40,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
   },
   sectionHeader: {
     marginBottom: Spacing.md,

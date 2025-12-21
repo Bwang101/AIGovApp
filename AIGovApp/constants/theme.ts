@@ -4,12 +4,12 @@
 
 import { Platform } from 'react-native';
 
-// Modern pink/magenta accent color
-const primaryPink = '#FF6B9D';
-const primaryPinkDark = '#FF4D7A';
-const primaryPinkLight = '#FFB3D1';
+// Primary green accent color
+const primaryGreen = '#27AE60';
+const primaryGreenDark = '#219653';
+const primaryGreenLight = '#66D19A';
 
-// Green accent for prices/badges
+// Secondary green accent for badges
 const accentGreen = '#4CAF50';
 const accentGreenDark = '#388E3C';
 const accentGreenLight = '#81C784';
@@ -21,8 +21,8 @@ const textDark = '#1A1A1A';
 const textGray = '#666666';
 const textLight = '#999999';
 
-const tintColorLight = primaryPink;
-const tintColorDark = primaryPinkLight;
+const tintColorLight = primaryGreen;
+const tintColorDark = primaryGreenLight;
 
 export const Colors = {
   light: {
@@ -33,9 +33,9 @@ export const Colors = {
     icon: textGray,
     tabIconDefault: textLight,
     tabIconSelected: tintColorLight,
-    primary: primaryPink,
-    primaryDark: primaryPinkDark,
-    primaryLight: primaryPinkLight,
+    primary: primaryGreen,
+    primaryDark: primaryGreenDark,
+    primaryLight: primaryGreenLight,
     accent: accentGreen,
     accentDark: accentGreenDark,
     accentLight: accentGreenLight,
@@ -52,9 +52,9 @@ export const Colors = {
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
-    primary: primaryPink,
-    primaryDark: primaryPinkDark,
-    primaryLight: primaryPinkLight,
+    primary: primaryGreen,
+    primaryDark: primaryGreenDark,
+    primaryLight: primaryGreenLight,
     accent: accentGreen,
     accentDark: accentGreenDark,
     accentLight: accentGreenLight,

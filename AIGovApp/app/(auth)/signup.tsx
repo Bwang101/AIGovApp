@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   link: {
-    color: '#FF6B9D',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
 });

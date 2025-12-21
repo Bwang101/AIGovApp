@@ -10,6 +10,7 @@ import RECIPES, { Recipe } from '../data/recipes';
 import { Colors } from '@/constants/theme';
 import { Spacing, Radius } from '@/constants/spacing';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -20,6 +21,7 @@ export default function ExploreScreen() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     // Get 6 random recipes on load
@@ -34,25 +36,26 @@ export default function ExploreScreen() {
   };
 
   const renderRecipeCard = ({ item, index }: { item: Recipe; index: number }) => (
-    <AnimatedCard
-      variant="elevated"
-      style={styles.recipeCard}
-      delay={index * 50}
-      entering={FadeInDown.duration(400).delay(index * 100)}
-      onPress={() => setSelectedRecipe(item)}>
-      <View style={styles.cardImagePlaceholder}>
-        <Ionicons name="restaurant" size={32} color={colors.primary} />
-      </View>
-      <View style={styles.cardContent}>
-        <ThemedText type="defaultSemiBold" style={styles.recipeName} numberOfLines={2}>
-          {item.title}
-        </ThemedText>
-        <View style={styles.cardFooter}>
-          <Badge label={`${item.ingredients.length} items`} variant="accent" />
-          <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
+    <Animated.View entering={FadeInDown.duration(400).delay(index * 100)}>
+      <AnimatedCard
+        variant="elevated"
+        style={styles.recipeCard}
+        delay={index * 50}
+        onPress={() => setSelectedRecipe(item)}>
+        <View style={styles.cardImagePlaceholder}>
+          <Ionicons name="restaurant" size={32} color={colors.primary} />
         </View>
-      </View>
-    </AnimatedCard>
+        <View style={styles.cardContent}>
+          <ThemedText type="defaultSemiBold" style={styles.recipeName} numberOfLines={2}>
+            {item.title}
+          </ThemedText>
+          <View style={styles.cardFooter}>
+            <Badge label={`${item.ingredients.length} items`} variant="accent" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
+          </View>
+        </View>
+      </AnimatedCard>
+    </Animated.View>
   );
 
   if (selectedRecipe) {
@@ -67,8 +70,9 @@ export default function ExploreScreen() {
           />
         </View>
         <ScrollView style={styles.detailScroll} contentContainerStyle={styles.detailScrollContent}>
-          <AnimatedCard variant="elevated" style={styles.detailCard} entering={FadeIn.duration(400)}>
-            <View style={styles.detailImagePlaceholder}>
+          <Animated.View entering={FadeIn.duration(400)}>
+            <AnimatedCard variant="elevated" style={styles.detailCard}>
+              <View style={styles.detailImagePlaceholder}>
               <Ionicons name="restaurant" size={48} color={colors.primary} />
             </View>
             <ThemedText type="title" style={styles.detailTitle}>{selectedRecipe.title}</ThemedText>
@@ -82,11 +86,12 @@ export default function ExploreScreen() {
               </View>
             </View>
 
-            <View style={styles.instructionsSection}>
-              <ThemedText style={styles.sectionLabel}>Instructions</ThemedText>
-              <ThemedText style={styles.detailText}>{selectedRecipe.instructions}</ThemedText>
-            </View>
-          </AnimatedCard>
+              <View style={styles.instructionsSection}>
+                <ThemedText style={styles.sectionLabel}>Instructions</ThemedText>
+                <ThemedText style={styles.detailText}>{selectedRecipe.instructions}</ThemedText>
+              </View>
+              </AnimatedCard>
+            </Animated.View>
         </ScrollView>
       </ThemedView>
     );
@@ -95,6 +100,7 @@ export default function ExploreScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView
+        key={isFocused ? 'focused' : 'blurred'}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(600).delay(0)} style={styles.header}>
@@ -139,6 +145,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.lg,
+    alignItems: 'center',
   },
   titleText: {
     fontSize: 32,
@@ -146,6 +153,7 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     marginBottom: Spacing.sm,
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   subtitleText: {
     fontSize: 16,
@@ -168,7 +176,7 @@ const styles = StyleSheet.create({
   cardImagePlaceholder: {
     width: '100%',
     height: 120,
-    backgroundColor: '#FFE5F0',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
   detailImagePlaceholder: {
     width: '100%',
     height: 200,
-    backgroundColor: '#FFE5F0',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -255,4 +263,5 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     width: '100%',
   },
+  
 });

@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { Spacing, Radius } from '@/constants/spacing';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import RECIPES from '../data/recipes';
 
@@ -20,6 +21,7 @@ export default function HistoryScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     (async () => {
@@ -48,6 +50,7 @@ export default function HistoryScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView
+        key={isFocused ? 'focused' : 'blurred'}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(600).delay(0)} style={styles.header}>
@@ -58,25 +61,27 @@ export default function HistoryScreen() {
         </Animated.View>
 
         {history.length === 0 ? (
-          <AnimatedCard variant="elevated" style={styles.emptyCard} entering={FadeIn.duration(400)}>
-            <Ionicons name="time-outline" size={48} color={colors.textLight} />
-            <ThemedText style={styles.emptyText}>No history yet</ThemedText>
-            <ThemedText style={styles.emptySubtext}>
-              Start searching for recipes to see them here
-            </ThemedText>
-          </AnimatedCard>
+          <Animated.View entering={FadeIn.duration(400)}>
+            <AnimatedCard variant="elevated" style={styles.emptyCard}>
+              <Ionicons name="time-outline" size={48} color={colors.textLight} />
+              <ThemedText style={styles.emptyText}>No history yet</ThemedText>
+              <ThemedText style={styles.emptySubtext}>
+                Start searching for recipes to see them here
+              </ThemedText>
+            </AnimatedCard>
+          </Animated.View>
         ) : (
           <FlatList
             data={history}
             keyExtractor={(i) => i.id}
             scrollEnabled={false}
             renderItem={({ item, index }) => (
-              <AnimatedCard
-                variant="elevated"
-                style={styles.historyCard}
-                delay={index * 50}
-                entering={FadeInDown.duration(400).delay(index * 100)}>
-                <View style={styles.cardRow}>
+              <Animated.View entering={FadeInDown.duration(400).delay(index * 100)}>
+                <AnimatedCard
+                  variant="elevated"
+                  style={styles.historyCard}
+                  delay={index * 50}>
+                  <View style={styles.cardRow}>
                   <View style={styles.cardLeft}>
                     <View style={styles.iconContainer}>
                       <Ionicons
@@ -110,7 +115,8 @@ export default function HistoryScreen() {
                     />
                   </View>
                 </View>
-              </AnimatedCard>
+                </AnimatedCard>
+              </Animated.View>
             )}
           />
         )}
@@ -131,6 +137,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.lg,
+    alignItems: 'center',
   },
   titleText: {
     fontSize: 32,
@@ -138,6 +145,7 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     marginBottom: Spacing.sm,
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   subtitleText: {
     fontSize: 16,
@@ -183,7 +191,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.full,
-    backgroundColor: '#FFE5F0',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
