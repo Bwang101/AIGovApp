@@ -63,3 +63,21 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+---
+
+## Repository maintenance note
+
+**What changed:** We removed the committed Python virtual environment (`server/.venv`) and its large files from the repository history to fix pushes that were rejected by GitHub due to >100MB files (notably `torch_cpu.dll`).
+
+**Action for collaborators:** After this history rewrite, please re-clone the repository to avoid issues with divergent history:
+
+```bash
+# discard local copy and re-clone
+cd ..
+rm -rf AIGovApp
+git clone https://github.com/Bwang101/AIGovApp.git
+```
+
+If you need any of the removed artifacts (e.g., large binaries or model files), we recommend distributing them outside the Git repository (release assets, cloud storage, or Git LFS).
+

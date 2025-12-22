@@ -11,3 +11,6 @@ pytest
 pytest-asyncio
 slowapi
 sentry-sdk
+scikit-learn
+transformers
+torch

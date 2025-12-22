@@ -43,6 +43,18 @@ export async function searchRecipes(ingredients: string, top_k = 3, baseUrl = DE
   return postJson(`${baseUrl}/search`, { ingredients, top_k });
 }
 
+export async function getAllRecipes(baseUrl = DEFAULT_BASE): Promise<{ total: number; recipes: Array<{ id: number; title: string; ingredients: string; instructions: string }> }> {
+  const res = await fetch(`${baseUrl}/recipes`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Status ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
 export async function generateRecipe(ingredients: string, baseUrl = DEFAULT_BASE): Promise<{ generated: string | null; reason?: string; best_score?: number }> {
   return postJson(`${baseUrl}/generate`, { ingredients });
 }

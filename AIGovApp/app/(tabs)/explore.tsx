@@ -1,38 +1,114 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, FlatList, View, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { AnimatedCard } from '@/components/ui/animated-card';
 import { AnimatedButton } from '@/components/ui/animated-button';
 import { Badge } from '@/components/ui/badge';
-import RECIPES, { Recipe } from '../data/recipes';
+import { Recipe } from '../data/recipes';
+import { getAllRecipes } from '../lib/recipeApi';
 import { Colors } from '@/constants/theme';
 import { Spacing, Radius } from '@/constants/spacing';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - Spacing.lg * 3) / 2; // 2 columns with padding
+const CARD_WIDTH = (width - Spacing.lg * 3) / 2;
+
+function getDefaultBase() {
+  const extras = (Constants.expoConfig && (Constants.expoConfig as any).extra) || (Constants.manifest && (Constants.manifest as any).extra) || {};
+  if (extras && extras.RECIPE_API_BASE) return extras.RECIPE_API_BASE as string;
+  if (Platform.OS === 'android') return 'http://10.0.2.2:8080';
+  return 'http://localhost:8080';
+}
 
 export default function ExploreScreen() {
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
   const [randomRecipes, setRandomRecipes] = useState<Recipe[]>([]);
+  const [searchResults, setSearchResults] = useState<Recipe[]>([]);
+  const [ingredients, setIngredients] = useState<string[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const isFocused = useIsFocused();
 
   useEffect(() => {
-    // Get 6 random recipes on load
-    const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
-    setRandomRecipes(shuffled.slice(0, 6));
+    loadAllRecipes();
   }, []);
 
+  const loadAllRecipes = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const baseUrl = getDefaultBase();
+      const response = await getAllRecipes(baseUrl);
+      
+      // Convert API response to Recipe format
+      const recipes: Recipe[] = response.recipes.map((r) => ({
+        id: `recipe-${r.id}`,
+        title: r.title,
+        ingredients: typeof r.ingredients === 'string' 
+          ? r.ingredients.split(',').map(i => i.trim()).filter(Boolean)
+          : Array.isArray(r.ingredients) ? r.ingredients : [],
+        instructions: r.instructions || '',
+        image_url: r.image_url || undefined,
+      }));
+      
+      setAllRecipes(recipes);
+      // Get 6 random recipes on load
+      const shuffled = [...recipes].sort(() => Math.random() - 0.5);
+      setRandomRecipes(shuffled.slice(0, 6));
+    } catch (e: any) {
+      const errorMsg = e?.message || 'Failed to load recipes';
+      if (errorMsg.includes('fetch') || errorMsg.includes('Network') || errorMsg.includes('Status')) {
+        setError('Cannot connect to server. Make sure the server is running on http://localhost:8080');
+      } else {
+        setError(errorMsg);
+      }
+      console.error('Error loading recipes:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleIngredientSearch = async () => {
+    if (ingredients.length === 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { searchRecipes } = await import('../lib/recipeApi');
+      const baseUrl = getDefaultBase();
+      const q = ingredients.join(', ');
+      const resp = await searchRecipes(q, 12, baseUrl);
+      const mapped: Recipe[] = resp.results.map((r) => ({
+        id: `recipe-${r.id}`,
+        title: r.title,
+        ingredients: typeof r.ingredients === 'string' ? r.ingredients.split(',').map(i => i.trim()).filter(Boolean) : Array.isArray(r.ingredients) ? r.ingredients : [],
+        instructions: r.instructions || '',
+        image_url: (r as any).image_url || undefined,
+        score: r.score,
+      }));
+      setSearchResults(mapped);
+    } catch (e: any) {
+      setError(e?.message || 'Search failed');
+      console.error('Search error:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const refreshRecipes = () => {
-    const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
-    setRandomRecipes(shuffled.slice(0, 6));
-    setSelectedRecipe(null);
+    if (allRecipes.length > 0) {
+      const shuffled = [...allRecipes].sort(() => Math.random() - 0.5);
+      setRandomRecipes(shuffled.slice(0, 6));
+      setSelectedRecipe(null);
+    }
   };
 
   const renderRecipeCard = ({ item, index }: { item: Recipe; index: number }) => (
@@ -73,25 +149,57 @@ export default function ExploreScreen() {
           <Animated.View entering={FadeIn.duration(400)}>
             <AnimatedCard variant="elevated" style={styles.detailCard}>
               <View style={styles.detailImagePlaceholder}>
-              <Ionicons name="restaurant" size={48} color={colors.primary} />
-            </View>
-            <ThemedText type="title" style={styles.detailTitle}>{selectedRecipe.title}</ThemedText>
-            
-            <View style={styles.ingredientsSection}>
-              <ThemedText style={styles.sectionLabel}>Ingredients</ThemedText>
-              <View style={styles.ingredientsList}>
-                {selectedRecipe.ingredients.map((ing, idx) => (
-                  <Badge key={idx} label={ing} variant="gray" style={styles.ingredientBadge} />
-                ))}
+                <Ionicons name="restaurant" size={48} color={colors.primary} />
               </View>
-            </View>
+              <ThemedText type="title" style={styles.detailTitle}>{selectedRecipe.title}</ThemedText>
+              
+              <View style={styles.ingredientsSection}>
+                <ThemedText style={styles.sectionLabel}>Ingredients</ThemedText>
+                <View style={styles.ingredientsList}>
+                  {selectedRecipe.ingredients.map((ing, idx) => (
+                    <Badge key={idx} label={ing} variant="gray" style={styles.ingredientBadge} />
+                  ))}
+                </View>
+              </View>
 
               <View style={styles.instructionsSection}>
                 <ThemedText style={styles.sectionLabel}>Instructions</ThemedText>
                 <ThemedText style={styles.detailText}>{selectedRecipe.instructions}</ThemedText>
               </View>
-              </AnimatedCard>
-            </Animated.View>
+            </AnimatedCard>
+          </Animated.View>
+        </ScrollView>
+      </ThemedView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <ThemedText style={styles.loadingText}>Loading recipes from database...</ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemedView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Animated.View entering={FadeInDown.duration(600).delay(0)} style={styles.header}>
+            <ThemedText type="title" style={styles.titleText}>Explore Recipes</ThemedText>
+            <ThemedText type="subtitle" style={[styles.subtitleText, { color: '#FF4444' }]}>
+              {error}
+            </ThemedText>
+            <AnimatedButton
+              title="Retry"
+              onPress={loadAllRecipes}
+              variant="primary"
+              style={styles.refreshButton}
+            />
+          </Animated.View>
         </ScrollView>
       </ThemedView>
     );
@@ -106,7 +214,7 @@ export default function ExploreScreen() {
         <Animated.View entering={FadeInDown.duration(600).delay(0)} style={styles.header}>
           <ThemedText type="title" style={styles.titleText}>Explore Recipes</ThemedText>
           <ThemedText type="subtitle" style={styles.subtitleText}>
-            Discover delicious recipes
+            {allRecipes.length > 0 ? `Discover ${allRecipes.length} delicious recipes` : 'Discover delicious recipes'}
           </ThemedText>
         </Animated.View>
 
@@ -263,5 +371,15 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     width: '100%',
   },
-  
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  loadingText: {
+    marginTop: Spacing.md,
+    fontSize: 16,
+    color: '#666666',
+  },
 });
