@@ -26,13 +26,15 @@ export default function HistoryScreen() {
   useEffect(() => {
     (async () => {
       try {
+        if (!isFocused) return;
         const raw = await Storage.getItem('@byte_to_bite_history');
         if (raw) setHistory(JSON.parse(raw));
+        else setHistory([]);
       } catch (e) {
         // ignore
       }
     })();
-  }, []);
+  }, [isFocused]);
 
   const toggleFavorite = async (id: string) => {
     const newHist = history.map((h) => (h.id === id ? { ...h, favorite: !h.favorite } : h));

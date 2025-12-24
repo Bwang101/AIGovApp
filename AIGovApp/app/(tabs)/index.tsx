@@ -27,6 +27,13 @@ function getDefaultBase() {
   return 'http://localhost:8080';
 }
 
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 60);
+
 type HistoryItem = {
   id: string;
   title: string;
@@ -56,13 +63,15 @@ export default function HomeScreen() {
   useEffect(() => {
     (async () => {
       try {
+        if (!isFocused) return;
         const raw = await Storage.getItem('@byte_to_bite_history');
         if (raw) setHistory(JSON.parse(raw));
+        else setHistory([]);
       } catch (e) {
         // ignore
       }
     })();
-  }, []);
+  }, [isFocused]);
 
   const saveHistory = async (newHistory: HistoryItem[]) => {
     setHistory(newHistory);
@@ -85,10 +94,11 @@ export default function HomeScreen() {
         setResult(response.results[0]);
         setShowRecipe(true);
         
-        const newItem: HistoryItem = { 
-          id: `recipe-${response.results[0].id || response.results[0].title}`, 
-          title: response.results[0].title, 
-          favorite: false 
+        const title = response.results[0].title;
+        const newItem: HistoryItem = {
+          id: (response.results[0] as any).id ? String((response.results[0] as any).id) : slugify(title),
+          title,
+          favorite: false,
         };
         
         const existing = history.find((h) => h.id === newItem.id);
