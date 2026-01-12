@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, Pressable, PressableProps } from 'react-native';
+import { HeartIcon, PlusIcon, BookmarkIcon } from 'heroicons-react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,9 +18,12 @@ export type AnimatedCardProps = PressableProps & {
   style?: ViewStyle;
   variant?: 'default' | 'elevated' | 'outlined';
   delay?: number;
+  icon?: 'heart' | 'plus' | 'bookmark';
+  iconPosition?: 'left' | 'right' | 'top';
+  onIconPress?: () => void;
 };
 
-export function AnimatedCard({ children, style, variant = 'default', delay = 0, ...props }: AnimatedCardProps) {
+export function AnimatedCard({ children, style, variant = 'default', delay = 0, icon, iconPosition = 'top', onIconPress, ...props }: AnimatedCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const scale = useSharedValue(1);
@@ -53,6 +57,31 @@ export function AnimatedCard({ children, style, variant = 'default', delay = 0, 
     style,
   ];
 
+  // Icon mapping
+  const iconMap = {
+    heart: <HeartIcon color={colors.primary} size={28} style={{ margin: 4 }} />, 
+    plus: <PlusIcon color={colors.primary} size={28} style={{ margin: 4 }} />, 
+    bookmark: <BookmarkIcon color={colors.primary} size={28} style={{ margin: 4 }} />, 
+  };
+
+  const renderIcon = () =>
+    icon ? (
+      <Pressable onPress={onIconPress} style={styles.iconWrap} hitSlop={8}>
+        {iconMap[icon]}
+      </Pressable>
+    ) : null;
+
+  const content = (
+    <>
+      {icon && iconPosition === 'top' && renderIcon()}
+      <View style={styles.contentRow}>
+        {icon && iconPosition === 'left' && renderIcon()}
+        <View style={{ flex: 1 }}>{children}</View>
+        {icon && iconPosition === 'right' && renderIcon()}
+      </View>
+    </>
+  );
+
   if (props.onPress) {
     return (
       <AnimatedPressable
@@ -60,14 +89,14 @@ export function AnimatedCard({ children, style, variant = 'default', delay = 0, 
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         {...props}>
-        {children}
+        {content}
       </AnimatedPressable>
     );
   }
 
   return (
     <Animated.View style={cardStyle} {...props}>
-      {children}
+      {content}
     </Animated.View>
   );
 }
@@ -80,6 +109,16 @@ const styles = StyleSheet.create({
   },
   elevated: {
     ...Shadows.lg,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
 });
 

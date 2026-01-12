@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { Pressable, StyleSheet, Text, ViewStyle, TextStyle, ActivityIndicator, View } from 'react-native';
+import { HeartIcon, PlusIcon, BookmarkIcon } from 'heroicons-react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,6 +21,8 @@ export type AnimatedButtonProps = {
   textStyle?: TextStyle;
   loading?: boolean;
   disabled?: boolean;
+  icon?: 'heart' | 'plus' | 'bookmark';
+  iconPosition?: 'left' | 'right';
 };
 
 export function AnimatedButton({
@@ -31,6 +34,8 @@ export function AnimatedButton({
   textStyle,
   loading = false,
   disabled = false,
+  icon,
+  iconPosition = 'left',
 }: AnimatedButtonProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -77,26 +82,39 @@ export function AnimatedButton({
 
   const textColor = variant === 'outline' ? colors.primary : '#FFFFFF';
 
+  // Icon mapping
+  const iconMap = {
+    heart: <HeartIcon color={colors.primary} size={22} style={{ marginHorizontal: 4 }} />,
+    plus: <PlusIcon color={colors.primary} size={22} style={{ marginHorizontal: 4 }} />,
+    bookmark: <BookmarkIcon color={colors.primary} size={22} style={{ marginHorizontal: 4 }} />,
+  };
+
   return (
     <AnimatedPressable
       style={buttonStyle}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={onPress}
-      disabled={disabled || loading}>
+      disabled={disabled || loading}
+    >
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <Text
-          style={[
-            styles.text,
-            { color: textColor },
-            size === 'small' && styles.smallText,
-            size === 'large' && styles.largeText,
-            textStyle,
-          ]}>
-          {title}
-        </Text>
+        <View style={styles.contentRow}>
+          {icon && iconPosition === 'left' && iconMap[icon]}
+          <Text
+            style={[
+              styles.text,
+              { color: textColor },
+              size === 'small' && styles.smallText,
+              size === 'large' && styles.largeText,
+              textStyle,
+            ]}
+          >
+            {title}
+          </Text>
+          {icon && iconPosition === 'right' && iconMap[icon]}
+        </View>
       )}
     </AnimatedPressable>
   );
@@ -104,33 +122,45 @@ export function AnimatedButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 24,
+    paddingVertical: 12,
     paddingHorizontal: 24,
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
-    minHeight: 48,
-  },
-  small: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    minHeight: 36,
-  },
-  large: {
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    minHeight: 56,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
   },
   text: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
-  smallText: {
+  small: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     fontSize: 14,
   },
-  largeText: {
+  large: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     fontSize: 18,
+  },
+  disabled: {
+    opacity: 0.6,
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
